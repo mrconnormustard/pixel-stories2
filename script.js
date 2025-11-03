@@ -1,6 +1,12 @@
 // --- Base config ---
-const BASE_W = 160, BASE_H = 144;
+const BASE_W = 160, BASE_H = 144;   // pixel-art playfield
 const FPS = 12;
+
+// --- Caption config ---
+// mode: 'below' = add extra canvas space so text never covers the scene
+//       'overlay' = draw box on top of the scene (classic Game Boy look)
+const CAPTION_MODE = 'below';
+const CAPTION_H = 40;
 
 window.addEventListener('load', () => {
   // Canvas
@@ -8,13 +14,18 @@ window.addEventListener('load', () => {
   const ctx = canvas.getContext('2d', { alpha: false });
   ctx.imageSmoothingEnabled = false;
 
+  // Internal canvas size (in pixels)
+  const TOTAL_H = (CAPTION_MODE === 'below') ? (BASE_H + CAPTION_H) : BASE_H;
+  canvas.width = BASE_W;
+  canvas.height = TOTAL_H;
+
   // Integer scaling: pick largest whole-number scale that fits window
   function applyIntegerScale() {
     const sw = Math.floor(window.innerWidth  / BASE_W);
-    const sh = Math.floor(window.innerHeight / BASE_H);
+    const sh = Math.floor(window.innerHeight / TOTAL_H);
     const scale = Math.max(1, Math.min(sw, sh));
     canvas.style.width  = (BASE_W * scale) + 'px';
-    canvas.style.height = (BASE_H * scale) + 'px';
+    canvas.style.height = (TOTAL_H * scale) + 'px';
   }
   window.addEventListener('resize', applyIntegerScale);
   applyIntegerScale();
@@ -38,6 +49,7 @@ window.addEventListener('load', () => {
   // --- 10-scene story: princess in the valley of light ---
   // spriteX/spriteY override default centered near bottom
   // scale optional per scene (1 = original size)
+  // caption: 'on' | 'off' per scene (default 'on')
   const SCENES = [
     { text: "In a quiet valley,",            showPrincess: true,  px: 0,  py: -2 },
     { text: "morning light gathered.",       showPrincess: true,  px: 1,  py: -1 },
@@ -48,25 +60,20 @@ window.addEventListener('load', () => {
     { text: "A path opened softly.",         showPrincess: true,  px: 0,  py: 0,  spriteX: 20 },
     { text: "She stepped without hurry.",    showPrincess: true,  px: -1, py: 0,  spriteX: 110 },
     { text: "Light welcomed her home.",      showPrincess: true,  px: 0,  py: -1 },
-    { text: "And the valley glowed.",        showPrincess: false, px: 0,  py: 0  }
+    { text: "And the valley glowed.",        showPrincess: false, px: 0,  py: 0,  caption: 'off' }
   ];
   let scene = 0;
 
-  // --- Load saved per-scene overrides from localStorage (if any) ---
+  // --- Persist per-scene overrides locally (so you can tweak in browser) ---
   const OV_KEY = 'pixelstories_scene_overrides_v1';
   function loadOverrides() {
     try {
       const raw = localStorage.getItem(OV_KEY);
       if (!raw) return;
       const data = JSON.parse(raw);
-      data.forEach((ov, i) => {
-        if (!ov) return;
-        SCENES[i] = { ...SCENES[i], ...ov };
-      });
+      data.forEach((ov, i) => { if (ov) SCENES[i] = { ...SCENES[i], ...ov }; });
       console.log('Loaded scene overrides from localStorage');
-    } catch (e) {
-      console.warn('Failed to load overrides', e);
-    }
+    } catch (e) { console.warn('Failed to load overrides', e); }
   }
   function saveOverrides() {
     try {
@@ -76,12 +83,11 @@ window.addEventListener('load', () => {
         if ('spriteY' in s) out.spriteY = s.spriteY;
         if ('scale'   in s) out.scale   = s.scale;
         if ('showPrincess' in s) out.showPrincess = s.showPrincess;
+        if ('caption' in s) out.caption = s.caption;
         return Object.keys(out).length ? out : null;
       });
       localStorage.setItem(OV_KEY, JSON.stringify(compact));
-    } catch (e) {
-      console.warn('Failed to save overrides', e);
-    }
+    } catch (e) { console.warn('Failed to save overrides', e); }
   }
   loadOverrides();
 
@@ -102,16 +108,19 @@ window.addEventListener('load', () => {
     if (ts - last >= step) {
       last += step;
 
-      // Background for current scene (fallback fill if not ready)
+      // Clear full canvas
+      ctx.fillStyle = "rgb(30,30,30)";
+      ctx.fillRect(0, 0, BASE_W, TOTAL_H);
+
+      // Background for current scene in the playfield area only
       const bgImg = backgrounds[scene];
       if (bgImg && bgImg.complete && bgImg.naturalWidth > 0) {
-        ctx.drawImage(bgImg, 0, 0);
+        ctx.drawImage(bgImg, 0, 0); // 160x144
       } else {
-        ctx.fillStyle = "rgb(30,30,30)";
-        ctx.fillRect(0, 0, BASE_W, BASE_H);
+        // fallback already filled
       }
 
-      // Optional editor grid
+      // Optional editor grid over the playfield (not over caption area)
       if (showGrid) {
         ctx.globalAlpha = 0.15;
         ctx.strokeStyle = "#ffffff";
@@ -124,7 +133,7 @@ window.addEventListener('load', () => {
         ctx.globalAlpha = 1;
       }
 
-      // Princess - only on selected scenes
+      // Princess (playfield only)
       const s = SCENES[scene];
       if (s.showPrincess && princess.complete && princess.naturalWidth > 0) {
         const pw = princess.width;
@@ -146,22 +155,37 @@ window.addEventListener('load', () => {
         ctx.drawImage(princess, baseX + offsetX, baseY + offsetY, dw, dh);
       }
 
-      // Caption box
-      const boxH = 40;
-      ctx.fillStyle = BOX;
-      ctx.fillRect(0, BASE_H - boxH, BASE_W, boxH);
+      // Caption
+      const showCaption = (s.caption !== 'off');
+      if (showCaption) {
+        if (CAPTION_MODE === 'overlay') {
+          // Draw over the playfield (classic look)
+          const boxY = BASE_H - CAPTION_H;
+          ctx.fillStyle = BOX;
+          ctx.fillRect(0, boxY, BASE_W, CAPTION_H);
 
-      // Text
-      ctx.textAlign = "center";
-      ctx.font = "8px monospace";
-      const cx = BASE_W / 2;
-      const cy = BASE_H - boxH + 18;
-      ctx.fillStyle = SHD;
-      ctx.fillText(s.text, cx + 1, cy + 1);
-      ctx.fillStyle = TXT;
-      ctx.fillText(s.text, cx, cy);
+          ctx.textAlign = "center";
+          ctx.font = "8px monospace";
+          const cx = BASE_W / 2;
+          const cy = boxY + 18;
+          ctx.fillStyle = SHD; ctx.fillText(s.text, cx + 1, cy + 1);
+          ctx.fillStyle = TXT; ctx.fillText(s.text, cx, cy);
+        } else {
+          // Draw in extra space below the playfield - never covers the scene
+          const boxY = BASE_H;
+          ctx.fillStyle = BOX;
+          ctx.fillRect(0, boxY, BASE_W, CAPTION_H);
 
-      // Editor HUD
+          ctx.textAlign = "center";
+          ctx.font = "8px monospace";
+          const cx = BASE_W / 2;
+          const cy = boxY + 18;
+          ctx.fillStyle = SHD; ctx.fillText(s.text, cx + 1, cy + 1);
+          ctx.fillStyle = TXT; ctx.fillText(s.text, cx, cy);
+        }
+      }
+
+      // Editor HUD (top overlay, tiny)
       if (editMode) {
         ctx.fillStyle = "rgba(0,0,0,0.6)";
         ctx.fillRect(0, 0, BASE_W, 18);
@@ -171,7 +195,7 @@ window.addEventListener('load', () => {
         const sx = (typeof s.spriteX === 'number') ? s.spriteX : Math.floor((BASE_W - (princess.width||0)) / 2);
         const sy = (typeof s.spriteY === 'number') ? s.spriteY : Math.floor(BASE_H - (princess.height||0) - 20);
         const sc = (typeof s.scale === 'number') ? s.scale.toFixed(2) : '1.00';
-        const hud = `EDIT s:${scene+1}/10  X:${sx}  Y:${sy}  scale:${sc}  [Arrows] move  Shift=5px  +/- scale  0 reset  [ ] scene  G grid  Enter exit  C copy`;
+        const hud = `EDIT s:${scene+1}/10  X:${sx}  Y:${sy}  scale:${sc}  [Arrows] move  Shift=5px  +/- scale  0 reset  [ ] scene  G grid  H hide  C copy`;
         ctx.fillText(hud, 4, 12);
       }
     }
@@ -223,17 +247,15 @@ window.addEventListener('load', () => {
   // 0 - reset scale to 1
   // [ and ] - prev or next scene
   // G - toggle grid
+  // H - toggle princess visibility for current scene
   // C - copy SCENES JSON to console
   window.addEventListener('keydown', (ev) => {
     const s = SCENES[scene];
-    if (ev.key === 'Enter') {
-      editMode = !editMode;
-      return;
-    }
+    if (ev.key === 'Enter') { editMode = !editMode; return; }
     if (!editMode) return;
 
     const step = ev.shiftKey ? 5 : 1;
-    // Ensure spriteX/Y exist so moves are deterministic
+
     if (s.showPrincess) {
       if (typeof s.spriteX !== 'number') s.spriteX = Math.floor((BASE_W - (princess.width||0)) / 2);
       if (typeof s.spriteY !== 'number') s.spriteY = Math.floor(BASE_H - (princess.height||0) - 20);
@@ -255,29 +277,23 @@ window.addEventListener('load', () => {
         if (s.showPrincess) { s.spriteY = Math.min(BASE_H + 64, s.spriteY + step); changed = true; }
         break;
       case '+':
-      case '=': {
+      case '=':
         if (s.showPrincess) {
           s.scale = typeof s.scale === 'number' ? s.scale : 1;
           s.scale = Math.min(3, s.scale + 0.05);
           changed = true;
         }
         break;
-      }
-      case '-': {
+      case '-':
         if (s.showPrincess) {
           s.scale = typeof s.scale === 'number' ? s.scale : 1;
           s.scale = Math.max(0.2, s.scale - 0.05);
           changed = true;
         }
         break;
-      }
-      case '0': {
-        if (s.showPrincess) {
-          s.scale = 1;
-          changed = true;
-        }
+      case '0':
+        if (s.showPrincess) { s.scale = 1; changed = true; }
         break;
-      }
       case '[':
         scene = (scene - 1 + SCENES.length) % SCENES.length;
         break;
@@ -288,16 +304,14 @@ window.addEventListener('load', () => {
       case 'G':
         showGrid = !showGrid;
         break;
+      case 'h':
+      case 'H':
+        s.showPrincess = !s.showPrincess; changed = true;
+        break;
       case 'c':
       case 'C':
         console.log('--- Copy SCENES JSON below ---');
         console.log(JSON.stringify(SCENES, null, 2));
-        break;
-      case 'h':
-      case 'H':
-        // Toggle princess visibility for current scene
-        s.showPrincess = !s.showPrincess;
-        changed = true;
         break;
     }
 
