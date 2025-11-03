@@ -51,17 +51,89 @@ window.addEventListener('load', () => {
   // scale optional per scene (1 = original size)
   // caption: 'on' | 'off' per scene (default 'on')
   const SCENES = [
-    { text: "In a quiet valley,",            showPrincess: true,  px: 0,  py: -2 },
-    { text: "morning light gathered.",       showPrincess: true,  px: 1,  py: -1 },
-    { text: "The princess listened",         showPrincess: true,  px: 0,  py: 0  },
-    { text: "to rivers of silver wind.",     showPrincess: false, px: 0,  py: 0  },
-    { text: "Mountains breathed slow.",      showPrincess: false, px: 0,  py: 0  },
-    { text: "Flowers woke like lanterns.",   showPrincess: true,  px: 1,  py: 0  },
-    { text: "A path opened softly.",         showPrincess: true,  px: 0,  py: 0,  spriteX: 20 },
-    { text: "She stepped without hurry.",    showPrincess: true,  px: -1, py: 0,  spriteX: 110 },
-    { text: "Light welcomed her home.",      showPrincess: true,  px: 0,  py: -1 },
-    { text: "And the valley glowed.",        showPrincess: false, px: 0,  py: 0,  caption: 'on' }
-  ];
+  {
+    "text": "In a quiet valley,",
+    "showPrincess": true,
+    "px": 0,
+    "py": -2,
+    "spriteX": -19,
+    "spriteY": 28,
+    "scale": 0.5999999999999996
+  },
+  {
+    "text": "morning light gathered.",
+    "showPrincess": false,
+    "px": 1,
+    "py": -1,
+    "spriteX": 92,
+    "spriteY": 79,
+    "scale": 0.4499999999999996
+  },
+  {
+    "text": "The princess listened",
+    "showPrincess": true,
+    "px": 0,
+    "py": 0,
+    "spriteX": -49,
+    "spriteY": 44,
+    "scale": 0.7999999999999998
+  },
+  {
+    "text": "to rivers of silver wind.",
+    "showPrincess": false,
+    "px": 0,
+    "py": 0
+  },
+  {
+    "text": "Mountains breathed slow.",
+    "showPrincess": false,
+    "px": 0,
+    "py": 0
+  },
+  {
+    "text": "Flowers woke like lanterns.",
+    "showPrincess": true,
+    "px": 1,
+    "py": 0,
+    "spriteX": -6,
+    "spriteY": 47,
+    "scale": 0.4499999999999996
+  },
+  {
+    "text": "A path opened softly.",
+    "showPrincess": true,
+    "px": 0,
+    "py": 0,
+    "spriteX": 20,
+    "spriteY": 39,
+    "scale": 0.4499999999999996
+  },
+  {
+    "text": "She stepped without hurry.",
+    "showPrincess": true,
+    "px": -1,
+    "py": 0,
+    "spriteX": 93,
+    "spriteY": 37,
+    "scale": 0.4499999999999996
+  },
+  {
+    "text": "Light welcomed her home.",
+    "showPrincess": true,
+    "px": 0,
+    "py": -1,
+    "spriteX": 41,
+    "spriteY": 40,
+    "scale": 0.4499999999999996
+  },
+  {
+    "text": "And the valley glowed.",
+    "showPrincess": false,
+    "px": 0,
+    "py": 0,
+    "caption": "off"
+  }
+]
   let scene = 0;
 
   // --- Persist per-scene overrides locally (so you can tweak in browser) ---
