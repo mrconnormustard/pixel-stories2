@@ -210,7 +210,7 @@ window.addEventListener('load', () => {
     setTimeout(() => {
       scene = (scene + 1) % SCENES.length;
       pendingAdvance = false;
-    }, ADVANCE_DELAYMS);
+    }, ADVANCE_DELAY_MS);
   }
 
   canvas.addEventListener('mousedown', onTap, { passive: false });
