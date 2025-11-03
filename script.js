@@ -122,16 +122,15 @@ window.addEventListener('load', () => {
     "showPrincess": true,
     "px": 0,
     "py": -1,
-    "spriteX": 41,
-    "spriteY": 40,
-    "scale": 0.4499999999999996
+    "spriteX": 37,
+    "spriteY": 109,
+    "scale": 0.2
   },
   {
     "text": "And the valley glowed.",
     "showPrincess": false,
     "px": 0,
     "py": 0,
-    "caption": "on"
   }
 ]
   let scene = 0;
