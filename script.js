@@ -131,7 +131,7 @@ window.addEventListener('load', () => {
     "showPrincess": false,
     "px": 0,
     "py": 0,
-    "caption": "off"
+    "caption": "on"
   }
 ]
   let scene = 0;
