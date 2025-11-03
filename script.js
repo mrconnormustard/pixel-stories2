@@ -19,24 +19,38 @@ window.addEventListener('load', () => {
   window.addEventListener('resize', applyIntegerScale);
   applyIntegerScale();
 
-  // --- Load images (with logging) ---
-  const bg = new Image();
-  bg.onload = () => console.log('background.png loaded:', bg.width, 'x', bg.height);
-  bg.onerror = (e) => console.error('background.png failed to load', e);
-  bg.src = 'background.png';   // must be 160x144 and in same folder as index.html
+  // --- Load backgrounds (per scene) ---
+  const backgrounds = [];
+  for (let i = 1; i <= 10; i++) {
+    const img = new Image();
+    img.src = `background${i}.png`; // filenames: background1.png ... background10.png
+    img.onload  = () => console.log(`Loaded: background${i}.png (${img.width}x${img.height})`);
+    img.onerror = (e) => console.error(`Failed: background${i}.png`, e);
+    backgrounds.push(img);
+  }
 
+  // --- Load princess sprite (shared across scenes) ---
   const princess = new Image();
-  princess.onload = () => console.log('princess.png loaded:', princess.width, 'x', princess.height);
+  princess.onload  = () => console.log('princess.png loaded:', princess.width, 'x', princess.height);
   princess.onerror = (e) => console.error('princess.png failed to load', e);
-  princess.src = 'princess.png'; // e.g., 16x24, same folder
+  princess.src = 'princess.png'; // e.g., 16x24 in same folder
 
-  // --- Story text ---
-  const story = [
-    "In a quiet valley,",
-    "the princess waited,",
-    "as dawn painted the sky."
+  // --- 10-scene story: princess in the valley of light ---
+  // Each scene can nudge the sprite by px/py, and decide whether to show her.
+  // Optional spriteX/spriteY to override default centered position.
+  const SCENES = [
+    { text: "In a quiet valley,",            showPrincess: true,  px: 0,  py: -2 },
+    { text: "morning light gathered.",       showPrincess: true,  px: 1,  py: -1 },
+    { text: "The princess listened",         showPrincess: true,  px: 0,  py: 0  },
+    { text: "to rivers of silver wind.",     showPrincess: false, px: 0,  py: 0  }, // no sprite
+    { text: "Mountains breathed slow.",      showPrincess: false, px: 0,  py: 0  },
+    { text: "Flowers woke like lanterns.",   showPrincess: true,  px: 1,  py: 0  },
+    { text: "A path opened softly.",         showPrincess: true,  px: 0,  py: 0,  spriteX: 20 }, // left side
+    { text: "She stepped without hurry.",    showPrincess: true,  px: -1, py: 0,  spriteX: 110 }, // right side
+    { text: "Light welcomed her home.",      showPrincess: true,  px: 0,  py: -1 },
+    { text: "And the valley glowed.",        showPrincess: false, px: 0,  py: 0  }
   ];
-  let line = 0;
+  let scene = 0;
 
   // --- Palette ---
   const BOX = "rgb(16,36,16)";
@@ -51,19 +65,29 @@ window.addEventListener('load', () => {
     if (ts - last >= step) {
       last += step;
 
-      // Background (fallback if not loaded yet)
-      if (bg.complete && bg.naturalWidth > 0) {
-        ctx.drawImage(bg, 0, 0);
+      // Background for current scene (fallback fill if not ready)
+      const bgImg = backgrounds[scene];
+      if (bgImg && bgImg.complete && bgImg.naturalWidth > 0) {
+        ctx.drawImage(bgImg, 0, 0);
       } else {
         ctx.fillStyle = "rgb(30,30,30)";
         ctx.fillRect(0, 0, BASE_W, BASE_H);
       }
 
-      // Princess (centered near bottom)
-      if (princess.complete && princess.naturalWidth > 0) {
+      // Princess - only on selected scenes
+      const s = SCENES[scene];
+      if (s.showPrincess && princess.complete && princess.naturalWidth > 0) {
         const pw = princess.width;
         const ph = princess.height;
-        ctx.drawImage(princess, (BASE_W - pw) / 2, BASE_H - ph - 20);
+
+        // Default centered near bottom, with optional overrides
+        const baseX = typeof s.spriteX === 'number' ? s.spriteX : Math.floor((BASE_W - pw) / 2);
+        const baseY = typeof s.spriteY === 'number' ? s.spriteY : Math.floor(BASE_H - ph - 20);
+
+        const offsetX = s.px || 0;
+        const offsetY = s.py || 0;
+
+        ctx.drawImage(princess, baseX + offsetX, baseY + offsetY);
       }
 
       // Caption box
@@ -77,15 +101,15 @@ window.addEventListener('load', () => {
       const cx = BASE_W / 2;
       const cy = BASE_H - boxH + 18;
       ctx.fillStyle = SHD;
-      ctx.fillText(story[line], cx + 1, cy + 1);
+      ctx.fillText(s.text, cx + 1, cy + 1);
       ctx.fillStyle = TXT;
-      ctx.fillText(story[line], cx, cy);
+      ctx.fillText(s.text, cx, cy);
     }
     requestAnimationFrame(loop);
   }
   requestAnimationFrame(loop);
 
-  // --- Tap/click to advance line + beep ---
+  // --- Tap/click to advance scene with 0.5s delay + beep ---
   let audioCtx = null;
   function beep() {
     try {
@@ -105,11 +129,23 @@ window.addEventListener('load', () => {
     } catch {}
   }
 
+  // Prevent spamming while waiting for delayed advance
+  let pendingAdvance = false;
+  const ADVANCE_DELAY_MS = 500;
+
   function onTap(ev) {
     ev.preventDefault();
+    if (pendingAdvance) return;
+    pendingAdvance = true;
     beep();
-    line = (line + 1) % story.length;
+
+    setTimeout(() => {
+      scene = (scene + 1) % SCENES.length;
+      pendingAdvance = false;
+    }, ADVANCE_DELAY_MS);
   }
+
+  // Pointer listeners
   canvas.addEventListener('mousedown', onTap, { passive: false });
   canvas.addEventListener('touchstart', onTap, { passive: false });
 });
