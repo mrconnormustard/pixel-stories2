@@ -39,7 +39,7 @@ window.addEventListener('load', () => {
   // Each scene can nudge the sprite by px/py, and decide whether to show her.
   // Optional spriteX/spriteY to override default centered position.
   const SCENES = [
-    { text: "In a quiet valley,",            showPrincess: true,  px: 0,  py: -2 },
+    { text: "In a quiet valley,",            showPrincess: true,  px: 0,  py: -2, spriteX: 60, spriteY: 90, },
     { text: "morning light gathered.",       showPrincess: true,  px: 1,  py: -1 },
     { text: "The princess listened",         showPrincess: true,  px: 0,  py: 0  },
     { text: "to rivers of silver wind.",     showPrincess: false, px: 0,  py: 0  }, // no sprite
@@ -87,7 +87,7 @@ window.addEventListener('load', () => {
         const offsetX = s.px || 0;
         const offsetY = s.py || 0;
 
-        ctx.drawImage(princess, baseX + offsetX, baseY + offsetY);
+        ctx.drawImage(princess, baseX + offsetX, baseY + offsetY, princess.width * 0.8, princess.height * 0.5);
       }
 
       // Caption box
