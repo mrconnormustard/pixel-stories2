@@ -60,7 +60,7 @@ window.addEventListener('load', () => {
     { text: "A path opened softly.",         showPrincess: true,  px: 0,  py: 0,  spriteX: 20 },
     { text: "She stepped without hurry.",    showPrincess: true,  px: -1, py: 0,  spriteX: 110 },
     { text: "Light welcomed her home.",      showPrincess: true,  px: 0,  py: -1 },
-    { text: "And the valley glowed.",        showPrincess: false, px: 0,  py: 0,  caption: 'off' }
+    { text: "And the valley glowed.",        showPrincess: false, px: 0,  py: 0,  caption: 'on' }
   ];
   let scene = 0;
 
