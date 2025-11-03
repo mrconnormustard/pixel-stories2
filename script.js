@@ -47,7 +47,7 @@ window.addEventListener('load', () => {
   princess.src = 'princess.png'; // e.g., 16x24 in same folder
 
   // --- 10-scene story: princess in the valley of light ---
-  // spriteX/spriteY override default centered near bottom
+  // spriteX/spriteY erride default centered near bottom
   // scale optional per scene (1 = original size)
   // caption: 'on' | 'off' per scene (default 'on')
   const SCENES = [
@@ -136,8 +136,8 @@ window.addEventListener('load', () => {
 ]
   let scene = 0;
 
-  // --- Persist per-scene overrides locally (so you can tweak in browser) ---
-  const OV_KEY = 'pixelstories_scene_overrides_v1';
+  // --- Persist per-scene errides locally (so you can tweak in browser) ---
+  const OV_KEY = 'pixelstories_scene_overrides_v2';
   function loadOverrides() {
     try {
       const raw = localStorage.getItem(OV_KEY);
